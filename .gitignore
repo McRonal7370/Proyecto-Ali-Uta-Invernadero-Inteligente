@@ -1,6 +1,10 @@
 **/.pio/
 **/.vscode/
 
+**/target/
+**/build/
+**/dist/
+
 
 
 
