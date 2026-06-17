@@ -244,6 +244,7 @@ Alumnos:
 - ALDAIR ANTONIO CRISPI PIMENTEL 
 - CALEB BERNABE CARPIO ARMAS 
 - RONNY MELENDEZ RUIZ 
-- KEVIN CAÑARI MARCOS 
-Curso: Programación Avanzada
-Año: 2026
+- KEVIN CAÑARI MARCOS
+
+-Curso: Programación Avanzada
+-Año: 2026
