@@ -246,5 +246,5 @@ Alumnos:
 - RONNY MELENDEZ RUIZ 
 - KEVIN CAÑARI MARCOS
 
--Curso: Programación Avanzada
--Año: 2026
+- Curso: Programación Avanzada
+- Año: 2026
