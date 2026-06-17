@@ -13,7 +13,7 @@ El proyecto utiliza dos módulos ESP32 que se comunican mediante el protocolo ES
 - Monitorear variables ambientales en tiempo real.
 - Registrar información de sensores.
 - Visualizar datos mediante una interfaz gráfica.
-- Permitir el control remoto de dispositivos conectados al sistema.
+- Permitir el control remoto de dispositivos conectados al sistema mediante un control manual y un automatico
 - Implementar comunicación inalámbrica eficiente entre microcontroladores.
 
 ---
@@ -78,6 +78,10 @@ Puede utilizarse para:
 - Sensor Capacitivo de Humedad de Suelo V1.2
 - Sensor BH1750
 - Sensor Ultrasónico HC-SR04
+- Actuadores:
+- Bomba de 5V
+- Lampara de 12V
+- Ventilador de 12V
 
 ## Software
 
@@ -155,7 +159,7 @@ PlatformIO → Upload
 ```text
 Proyecto_de_progracion_ESP32_2
 ```
-
+(la direccion MAC varia de acuerdo a cada esp32 , cambiala con la dirección de tu ESP32)
 2. Compilar el proyecto.
 
 3. Conectar el segundo ESP32.
@@ -235,7 +239,11 @@ mvn exec:java
 # Integrantes
 
 Proyecto desarrollado para la Universidad Nacional Mayor de San Marcos.
-
+Alumnos: 
+- MEZA ALEJO YOBER RONAL 
+- ALDAIR ANTONIO CRISPI PIMENTEL 
+- CALEB BERNABE CARPIO ARMAS 
+- RONNY MELENDEZ RUIZ 
+- KEVIN CAÑARI MARCOS 
 Curso: Programación Avanzada
-
 Año: 2026
