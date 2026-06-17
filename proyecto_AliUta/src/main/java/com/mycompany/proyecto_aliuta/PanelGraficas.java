@@ -54,7 +54,6 @@ public class PanelGraficas extends JPanel {
         panelNorte.add(panelFiltros, BorderLayout.SOUTH);
 
         // --- CREACIÓN E INYECCIÓN FIJA DE LA GRÁFICA ---
-        // 🔥 SOLUCIÓN CRÍTICA: Se cambia null por "" para evitar el NullPointerException interno de XChart
         chart = new XYChartBuilder()
                 .title("")
                 .xAxisTitle("Tiempo (s)")

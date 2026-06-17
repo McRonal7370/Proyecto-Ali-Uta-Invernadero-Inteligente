@@ -10,143 +10,58 @@ Autores : Ronal, Caleb , Ronny, Kevin, Aldair
 Curso :Programación Avanzada (7° Ciclo-UNMSM-FIEE)
  */
 // ESP32#2 (GATEWAY) - Código para recibir datos del nodo de campo y enviar comandos de control utilizando ESP-NOW
-// Incluyendo las librerías necesarias para el proyecto
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
 
-// Direccion MAC del ESP32 #1 (campo)
-uint8_t nodoMAC[] =
-{
-    0x00,0x4B,0x12,0x9B,0x30,0xC0
-};
+uint8_t nodoMAC[] = {0x00, 0x4B, 0x12, 0x9B, 0x30, 0xC0};
 
-// Estructura de datos para recibir del nodo de campo y enviar al nodo de campo 
-typedef struct
-{
-    float temperatura;
-    float humedadAire;
-    float humedadSuelo;
-    float lux;
-    float nivelTanque;
-    bool bomba;
-    bool ventilador;
-    int pwmLuz;
+typedef struct {
+    float temp, humA, humS, lux, niv;
+    bool bmb, vent, rig;
+    int pwm;
 } DatosSistema;
 
-DatosSistema datosRecibidos;
-
-// Estructura de datos para enviar al nodo de campo y recibir del nodo de campo
-typedef struct
-{
+typedef struct {
     bool modoAutomatico;
     bool bomba;
     bool ventilador;
     int pwmLuz;
-
+    int tiempoRiego;
 } ComandoControl;
 
 ComandoControl comando;
-// Recepción de datos del nodo de campo (ESP32 #1 - ESP-NOW)
-void onReceiveData(const uint8_t *mac, const uint8_t *incomingData, int len)
-{
-    memcpy(&datosRecibidos, incomingData, sizeof(DatosSistema));
 
-    Serial.print("{");
-    Serial.print("\"temp\":");
-    Serial.print(datosRecibidos.temperatura);
-    Serial.print(",\"humAire\":");
-    Serial.print(datosRecibidos.humedadAire);
-    Serial.print(",\"humSuelo\":");
-    Serial.print(datosRecibidos.humedadSuelo);
-    Serial.print(",\"lux\":");
-    Serial.print(datosRecibidos.lux);
-    Serial.print(",\"nivel\":");
-    Serial.print(datosRecibidos.nivelTanque);
-    Serial.print(",\"bomba\":");
-    Serial.print(datosRecibidos.bomba);
-    Serial.print(",\"vent\":");
-    Serial.print(datosRecibidos.ventilador);
-    Serial.print(",\"pwm\":");
-    Serial.print(datosRecibidos.pwmLuz);
-    Serial.println("}");
+void onReceiveData(const uint8_t *mac, const uint8_t *incomingData, int len) {
+    DatosSistema d;
+    memcpy(&d, incomingData, sizeof(DatosSistema));
+    Serial.printf("{\"temp\":%.1f,\"humAire\":%.1f,\"humSuelo\":%.1f,\"lux\":%.1f,\"nivel\":%.1f,\"bomba\":%d,\"vent\":%d,\"riego\":%d,\"pwm\":%d}\n", 
+                  d.temp, d.humA, d.humS, d.lux, d.niv, d.bmb, d.vent, d.rig, d.pwm);
 }
 
-// Enviar comando al nodo de campo (ESP32 #1-ESPNOW)
-void enviarComando()
-{
-    esp_now_send(
-        nodoMAC,
-        (uint8_t*)&comando,
-        sizeof(comando));
-}
-void procesarLinea(String linea)
-{
+void procesarLinea(String linea) {
     linea.trim();
-    
-    if (linea.indexOf("AUTO") >= 0)
-    {
+    if (linea.indexOf("AUTO") >= 0) {
         comando.modoAutomatico = true;
-        enviarComando();
-        Serial.println("{\"status\":\"AUTO_OK\"}");
-        return;
-    }
-    
-    if (linea.indexOf("MANUAL") >= 0)
-    {
+        esp_now_send(nodoMAC, (uint8_t*)&comando, sizeof(ComandoControl));
+    } else if (linea.startsWith("M,")) {
         comando.modoAutomatico = false;
-        
-        // Evaluamos presencia de subcadenas ignorando si hay espacios extra
-        comando.bomba = (linea.indexOf("\"bomba\":1") >= 0);
-        comando.ventilador = (linea.indexOf("\"vent\":1") >= 0);
-        
-        int pos = linea.indexOf("\"pwm\":");
-        if (pos >= 0)
-        {
-            // Extrae desde el número en adelante y limpia caracteres extra
-            String valor = linea.substring(pos + 6);
-            valor.trim();
-            comando.pwmLuz = valor.toInt();
-        }
-        
-        enviarComando();
-        Serial.println("{\"status\":\"MANUAL_OK\"}");
+        int m, b, v, p, t;
+        sscanf(linea.c_str(), "M,%d,%d,%d,%d,%d", &m, &b, &v, &p, &t);
+        comando.bomba = (b == 1); comando.ventilador = (v == 1);
+        comando.pwmLuz = p; comando.tiempoRiego = t;
+        esp_now_send(nodoMAC, (uint8_t*)&comando, sizeof(ComandoControl));
     }
 }
 
-// Configuración inicial del ESP32 #2 (Gateway)
-void setup()
-{
-    Serial.begin(115200);
-    WiFi.mode(WIFI_STA);
-    if (esp_now_init() != ESP_OK)
-    {
-        Serial.println("ESP-NOW ERROR");
-        return;
-    }
+void setup() {
+    Serial.begin(115200); WiFi.mode(WIFI_STA);
+    esp_now_init();
     esp_now_register_recv_cb(onReceiveData);
-    esp_now_peer_info_t peerInfo = {};
-    memcpy(peerInfo.peer_addr,nodoMAC,6);
-    peerInfo.channel = 0;
-    peerInfo.encrypt = false;
-    if (esp_now_add_peer(&peerInfo) != ESP_OK)
-    {
-        Serial.println("Peer Error");
-        return;
-    }
-    comando.modoAutomatico = true;
-    comando.bomba = false;
-    comando.ventilador = false;
-    comando.pwmLuz = 0;
-    Serial.println("Gateway iniciado");
+    esp_now_peer_info_t p = {}; memcpy(p.peer_addr, nodoMAC, 6);
+    esp_now_add_peer(&p);
 }
 
-// Loop principal para procesar comandos recibidos por Serial
-void loop()
-{
-    if (Serial.available())
-    {
-        String linea = Serial.readStringUntil('\n');
-        procesarLinea(linea);
-    }
+void loop() {
+    if (Serial.available()) procesarLinea(Serial.readStringUntil('\n'));
 }

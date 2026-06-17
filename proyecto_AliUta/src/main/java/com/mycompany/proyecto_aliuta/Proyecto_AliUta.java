@@ -7,6 +7,8 @@ public class Proyecto_AliUta extends JFrame {
     static {
         System.setProperty("os.arch", "amd64");
     }
+    
+    // Colores del tema centralizado para consistencia
     private final Color COLOR_FONDO = new Color(18, 18, 24);
     private final Color COLOR_PANELES = new Color(30, 30, 42);
     private final Color COLOR_TEXTO = new Color(255, 255, 255);
@@ -14,7 +16,7 @@ public class Proyecto_AliUta extends JFrame {
     private JPanel panelCentral;
     private CardLayout cardLayout;
 
-    // Variables globales de interfaz
+    // Instancias de los paneles
     private GestorSerial gestorSerial;
     private PanelMonitoreo panelMonitoreo;
     private PanelControl panelControl;
@@ -22,21 +24,21 @@ public class Proyecto_AliUta extends JFrame {
     private PanelGraficas panelGraficas; 
 
     public Proyecto_AliUta(String puertoSeleccionado) {
-        setTitle("ALIuTA - Sistema de Automatización");
+        setTitle("ALIuTA - Invernadero Inteligente");
         setSize(1100, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // 1. Instanciar los paneles de forma INDEPENDIENTE primero
+        // 1. Instanciación en orden
         panelMonitoreo = new PanelMonitoreo();
         panelHistorial = new PanelHistorial(); 
         panelGraficas = new PanelGraficas(); 
 
-        // 2. Inicializar el Gestor Serial pasándole las tres instancias limpias
+        // 2. Inicializar Gestor con las instancias creadas
         gestorSerial = new GestorSerial(panelMonitoreo, panelHistorial, panelGraficas); 
 
-        // 3. Vincular el panel de control una SOLA VEZ
+        // 3. Vincular panel de control con el gestor configurado
         panelControl = new PanelControl(gestorSerial);
 
         // --- Menú Lateral ---
@@ -45,7 +47,7 @@ public class Proyecto_AliUta extends JFrame {
         menuLateral.setBackground(COLOR_PANELES);
         menuLateral.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
 
-        // Logo
+        // Carga de Logo
         JLabel logoLateral = new JLabel();
         logoLateral.setHorizontalAlignment(SwingConstants.CENTER);
         java.net.URL imgURL = getClass().getResource("/Imagenes/logo_menu.png");
@@ -56,89 +58,54 @@ public class Proyecto_AliUta extends JFrame {
         }
         menuLateral.add(logoLateral);
 
-        // Botones del Menú
-        JButton btnInicio = crearBotonMenu("INICIO");
-        JButton btnMonitoreo = crearBotonMenu("MONITOREO");
-        JButton btnControl = crearBotonMenu("CONTROL");
-        JButton btnGraficas = crearBotonMenu("GRÁFICAS");
-        JButton btnHistorial = crearBotonMenu("HISTORIAL");
-
-        menuLateral.add(btnInicio);
-        menuLateral.add(btnMonitoreo);
-        menuLateral.add(btnControl);
-        menuLateral.add(btnGraficas);
-        menuLateral.add(btnHistorial);
+        // Botones de navegación
+        menuLateral.add(crearBotonMenu("INICIO", e -> cambiarPestana("Inicio")));
+        menuLateral.add(crearBotonMenu("MONITOREO", e -> cambiarPestana("Monitoreo")));
+        menuLateral.add(crearBotonMenu("CONTROL", e -> cambiarPestana("Control")));
+        menuLateral.add(crearBotonMenu("GRÁFICAS", e -> cambiarPestana("Graficas")));
+        menuLateral.add(crearBotonMenu("HISTORIAL", e -> cambiarPestana("Historial")));
         
-        // --- Panel Central (CardLayout) ---
+        // --- Panel Central ---
         cardLayout = new CardLayout();
         panelCentral = new JPanel(cardLayout);
         panelCentral.setBackground(COLOR_FONDO);
 
-        // AGREGAR LAS INSTANCIAS EXACTAS AL CARDLAYOUT
         panelCentral.add(new PanelInicio(), "Inicio");
         panelCentral.add(panelMonitoreo, "Monitoreo");
         panelCentral.add(panelControl, "Control");
         panelCentral.add(panelGraficas, "Graficas"); 
         panelCentral.add(panelHistorial, "Historial"); 
-
-        // --- Acción de botones para cambiar de pestaña ---
-        btnInicio.addActionListener(e -> cambiarPestana("Inicio"));
-        btnMonitoreo.addActionListener(e -> cambiarPestana("Monitoreo"));
-        btnControl.addActionListener(e -> cambiarPestana("Control"));
-        
-        // Corregido: Ahora se comporta de manera estable y definida igual que los demás paneles
-        btnGraficas.addActionListener(e -> {
-            cambiarPestana("Graficas");
-            // Forzar refresco específico para asegurar que la gráfica se expanda correctamente
-            panelGraficas.revalidate();
-            panelGraficas.repaint();
-        });
-
-        btnHistorial.addActionListener(e -> cambiarPestana("Historial"));
         
         add(menuLateral, BorderLayout.WEST);
         add(panelCentral, BorderLayout.CENTER);
 
-        // Iniciar conexión serial al método nativo
+        // Conexión inicial
         if (puertoSeleccionado != null && !puertoSeleccionado.isEmpty()) {
             gestorSerial.iniciarConexion(puertoSeleccionado);
-        } else {
-            JOptionPane.showMessageDialog(this, "No se detectó un puerto activo. Conecta tu hardware.");
         }
     } 
     
-    // Método centralizado para conmutar vistas limpiamente
     private void cambiarPestana(String nombrePestana) {
         cardLayout.show(panelCentral, nombrePestana);
-        panelCentral.revalidate();
-        panelCentral.repaint();
     }
         
-    private JButton crearBotonMenu(String texto) {
+    private JButton crearBotonMenu(String texto, java.awt.event.ActionListener accion) {
         JButton boton = new JButton(texto);
         boton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         boton.setForeground(COLOR_TEXTO);
         boton.setBackground(COLOR_PANELES);
         boton.setBorderPainted(false);
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        boton.addActionListener(accion);
         return boton;
     }
 
     public static void main(String[] args) {
-        System.setProperty("os.arch", "amd64");
-        
         SwingUtilities.invokeLater(() -> {
             SelectorPuerto selector = new SelectorPuerto(null);
             selector.setVisible(true);
-            
             String puerto = selector.getPuertoSeleccionado();
-            
-            if (puerto == null) {
-                System.exit(0);
-                return;
-            }
-            
-            new Proyecto_AliUta(puerto).setVisible(true);
+            if (puerto != null) new Proyecto_AliUta(puerto).setVisible(true);
         });
     }
 }
